@@ -655,7 +655,7 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 				"memory_limit": pool.Config.MemoryAllocation.GetResourceAllocationInfo().Limit,
 			}
 			respoolTags := map[string]string{"pool_name": pool.Name}
-			pt3, err := influxclient.NewPoint("resourcepool", respoolTags, resPoolFields, time.Now())
+			pt3, err := influxclient.NewPoint("resourcepool", respoolTags, respoolFields, time.Now())
 			if err != nil {
 				errlog.Println(err)
 				continue
