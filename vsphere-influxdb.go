@@ -19,7 +19,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-        "strconv"
 	"fmt"
 	"log"
 	"math"
@@ -527,7 +526,7 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 		Precision: "s",
 	})
 	if err != nil {
-		stdLog.Println(err)
+		stdlog.Println(err)
 	}
 
 	for _, base := range perfres.Returnval {
@@ -656,7 +655,11 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 				"memory_limit": pool.Config.MemoryAllocation.GetResourceAllocationInfo().Limit,
 			}
 			respoolTags := map[string]string{"pool_name": pool.Name}
-			pt3, err := influxclient.NewPoint("resourcepool", respoolTags, respoolFields, time.Now())
+			respoolFields := map[string]interface{}{
+				"cpu_limit":    "0",
+				"memory_limit": "0"
+                        }
+			pt3, err := influxclient.NewPoint("resourcepool", respoolTags, , time.Now())
 			if err != nil {
 				errlog.Println(err)
 				continue
@@ -760,7 +763,6 @@ func uploadQueryResults(vcenter VCenter, config Configuration, done chan bool){
 		Username: config.InfluxDB.Username,
 		Password: config.InfluxDB.Password,
 	})
-}
 
 
 func main() {
