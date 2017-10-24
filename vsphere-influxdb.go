@@ -19,6 +19,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+        "strconv"
 	"fmt"
 	"log"
 	"math"
@@ -175,9 +176,15 @@ func (vcenter *VCenter) Init(config Configuration) {
 
 // Query a vcenter
 func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.Client) {
+	defer func() {
+		log.Println("done")  // Println executes normally even if there is a panic
+		if x := recover(); x != nil {
+			log.Printf("run time panic: %v", x)
+		}
+	}()
 	stdlog.Println("Setting up query inventory of vcenter: ", vcenter.Hostname)
 
-	// Create the contect
+	// Create the context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -284,7 +291,7 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 	err = pc.Retrieve(ctx, vmRefs, []string{"summary"}, &vmmo)
 	if err != nil {
 		fmt.Println(err)
-		return
+		continue
 	}
 
 	// Retrieve properties for hosts
@@ -504,9 +511,15 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 		errlog.Println("Error: ", err)
 		return
 	}
+        if (len(perfres.Returnval) == 0){
+		errlog.Println("No metric data returned by vcenter: " + vcenter.Hostname)
+		errlog.Println("Error: ", err)
+        }
 
 	// Get the result
 	vcName := strings.Replace(vcenter.Hostname, config.Domain, "", -1)
+        stdlog.Println("vcenter name" + vcName)
+
 
 	//Influx batch points
 	bp, err := influxclient.NewBatchPoints(influxclient.BatchPointsConfig{
@@ -514,8 +527,7 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 		Precision: "s",
 	})
 	if err != nil {
-		errlog.Println(err)
-		return
+		stdLog.Println(err)
 	}
 
 	for _, base := range perfres.Returnval {
@@ -737,6 +749,18 @@ func queryVCenter(vcenter VCenter, config Configuration, InfluxDBClient influxcl
 	stdlog.Println("Querying vcenter")
 	vcenter.Query(config, InfluxDBClient)
 }
+
+func checkTimes(vcenter VCenter, config Configuration){
+}
+
+func uploadQueryResults(vcenter VCenter, config Configuration, done chan bool){
+	vcenter.Init(config)
+	InfluxDBClient, err := influxclient.NewHTTPClient(influxclient.HTTPConfig{
+		Addr:     config.InfluxDB.Hostname,
+		Username: config.InfluxDB.Username,
+		Password: config.InfluxDB.Password,
+	})
+
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "Debug mode")
