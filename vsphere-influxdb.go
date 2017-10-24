@@ -290,7 +290,6 @@ func (vcenter *VCenter) Query(config Configuration, InfluxDBClient influxclient.
 	err = pc.Retrieve(ctx, vmRefs, []string{"summary"}, &vmmo)
 	if err != nil {
 		fmt.Println(err)
-		continue
 	}
 
 	// Retrieve properties for hosts
@@ -759,6 +758,14 @@ func uploadQueryResults(vcenter VCenter, config Configuration, done chan bool){
 		Username: config.InfluxDB.Username,
 		Password: config.InfluxDB.Password,
 	})
+        if err != nil {
+                errlog.Println("Could not connect to InfluxDB")
+                errlog.Println(err)
+        } else {
+                stdlog.Println("Successfully connected to Influx\n")
+        }
+        queryVCenter(vcenter, config, InfluxDBClient)
+        done <- true
 }
 
 func main() {
