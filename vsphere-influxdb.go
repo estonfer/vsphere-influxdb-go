@@ -759,7 +759,7 @@ func uploadQueryResults(vcenter VCenter, config Configuration, done chan bool){
 		Username: config.InfluxDB.Username,
 		Password: config.InfluxDB.Password,
 	})
-
+}
 
 func main() {
 	flag.BoolVar(&debug, "debug", false, "Debug mode")
